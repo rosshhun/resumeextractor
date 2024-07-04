@@ -1,0 +1,472 @@
+{
+    "machine learning": [
+        "ml",
+        "machine learning"
+    ],
+    "artificial intelligence": [
+        "ai",
+        "artificial intelligence"
+    ],
+    "natural language processing": [
+        "nlp",
+        "natural language processing"
+    ],
+    "deep learning": [
+        "dl",
+        "deep learning"
+    ],
+    "data science": [
+        "data science",
+        "datascience"
+    ],
+    "data analysis": [
+        "data analysis",
+        "data analytics"
+    ],
+    "data visualization": [
+        "data viz",
+        "data visualization"
+    ],
+    "version control": [
+        "git",
+        "version control"
+    ],
+    "amazon web services": [
+        "aws",
+        "amazon web services"
+    ],
+    "continuous integration": [
+        "ci",
+        "continuous integration"
+    ],
+    "continuous deployment": [
+        "cd",
+        "continuous deployment"
+    ],
+    "devops": [
+        "development operations",
+        "devops"
+    ],
+    "user interface": [
+        "ui",
+        "user interface"
+    ],
+    "user experience": [
+        "ux",
+        "user experience"
+    ],
+    "javascript": [
+        "js",
+        "javascript"
+    ],
+    "node.js": [
+        "node",
+        "node.js"
+    ],
+    "kubernetes": [
+        "k8s",
+        "kubernetes"
+    ],
+    "react.js": [
+        "react",
+        "react.js"
+    ],
+    "angular.js": [
+        "angular",
+        "angular.js"
+    ],
+    "vue.js": [
+        "vue",
+        "vue.js"
+    ],
+    "typescript": [
+        "typescript",
+        "ts"
+    ],
+    "html": [
+        "html"
+    ],
+    "css": [
+        "css"
+    ],
+    "sass": [
+        "sass"
+    ],
+    "bootstrap": [
+        "bootstrap"
+    ],
+    "docker": [
+        "docker"
+    ],
+    "microservices": [
+        "microservices"
+    ],
+    "graphql": [
+        "graphql"
+    ],
+    "postgresql": [
+        "postgresql",
+        "postgres"
+    ],
+    "mysql": [
+        "mysql"
+    ],
+    "mongodb": [
+        "mongodb"
+    ],
+    "redis": [
+        "redis"
+    ],
+    "apache kafka": [
+        "kafka",
+        "apache kafka"
+    ],
+    "rabbitmq": [
+        "rabbitmq"
+    ],
+    "elastic stack": [
+        "elastic stack"
+    ],
+    "tensorflow": [
+        "tensorflow",
+        "tf"
+    ],
+    "pytorch": [
+        "pytorch"
+    ],
+    "scikit-learn": [
+        "scikit-learn",
+        "sklearn"
+    ],
+    "keras": [
+        "keras"
+    ],
+    "numpy": [
+        "numpy"
+    ],
+    "pandas": [
+        "pandas"
+    ],
+    "matplotlib": [
+        "matplotlib"
+    ],
+    "seaborn": [
+        "seaborn"
+    ],
+    "plotly": [
+        "plotly"
+    ],
+    "flask": [
+        "flask"
+    ],
+    "django": [
+        "django"
+    ],
+    "spring framework": [
+        "spring",
+        "spring framework"
+    ],
+    "ruby on rails": [
+        "rails",
+        "ruby on rails"
+    ],
+    "laravel": [
+        "laravel"
+    ],
+    "php": [
+        "php"
+    ],
+    "scala": [
+        "scala"
+    ],
+    "go": [
+        "go",
+        "golang"
+    ],
+    "c++": [
+        "c++"
+    ],
+    "java": [
+        "java"
+    ],
+    "swift": [
+        "swift"
+    ],
+    "objective-c": [
+        "objective-c"
+    ],
+    "rust": [
+        "rust"
+    ],
+    "cplusplus": [
+        "cplusplus"
+    ],
+    "dotnet": [
+        "dotnet"
+    ],
+    "azure": [
+        "azure",
+        "microsoft azure"
+    ],
+    "google cloud platform": [
+        "gcp",
+        "google cloud platform"
+    ],
+    "firebase": [
+        "firebase"
+    ],
+    "aws lambda": [
+        "lambda",
+        "aws lambda"
+    ],
+    "serverless": [
+        "serverless"
+    ],
+    "apache spark": [
+        "spark",
+        "apache spark"
+    ],
+    "hadoop": [
+        "hadoop"
+    ],
+    "apache hadoop": [
+        "hadoop",
+        "apache hadoop"
+    ],
+    "big data": [
+        "big data"
+    ],
+    "sql": [
+        "sql"
+    ],
+    "nosql": [
+        "nosql"
+    ],
+    "graphql": [
+        "graphql"
+    ],
+    "rest api": [
+        "rest api"
+    ],
+    "soap api": [
+        "soap api"
+    ],
+    "oauth": [
+        "oauth"
+    ],
+    "jwt": [
+        "jwt"
+    ],
+    "typescript": [
+        "typescript",
+        "ts"
+    ],
+    "jquery": [
+        "jquery"
+    ],
+    "wordpress": [
+        "wordpress"
+    ],
+    "joomla": [
+        "joomla"
+    ],
+    "elementor": [
+        "elementor"
+    ],
+    "blockchain": ["blockchain"],
+    "ethereum": ["ethereum"],
+    "smart contracts": ["smart contracts"],
+    "solidity": ["solidity"],
+    "cryptocurrency": ["cryptocurrency", "crypto"],
+    "decentralized finance": ["defi", "decentralized finance"],
+    "web3.js": ["web3.js"],
+    "ripple": ["ripple"],
+    "cardano": ["cardano"],
+    "polkadot": ["polkadot"],
+    "binance smart chain": ["bsc", "binance smart chain"],
+    "decentralized applications": ["dapps", "decentralized applications"],
+    "truffle framework": ["truffle", "truffle framework"],
+    "hyperledger fabric": ["hyperledger fabric"],
+    "cryptography": ["cryptography", "crypto"],
+    "cybersecurity": ["cybersecurity", "infosec"],
+    "network security": ["network security"],
+    "ethical hacking": ["ethical hacking"],
+    "penetration testing": ["penetration testing", "pen testing"],
+    "vulnerability assessment": ["vulnerability assessment"],
+    "firewall management": ["firewall management"],
+    "intrusion detection": ["intrusion detection"],
+    "incident response": ["incident response"],
+    "malware analysis": ["malware analysis"],
+    "digital forensics": ["digital forensics"],
+    "iot security": ["iot security"],
+    "cloud security": ["cloud security"],
+    "azure security": ["azure security"],
+    "gcp security": ["gcp security"],
+    "aws security": ["aws security"],
+    "computer vision": ["computer vision"],
+    "image processing": ["image processing"],
+    "opencv": ["opencv"],
+    "pytorch lightning": ["pytorch lightning"],
+    "computer graphics": ["computer graphics"],
+    "game development": ["game development"],
+    "unity": ["unity"],
+    "unreal engine": ["unreal engine"],
+    "game design": ["game design"],
+    "level design": ["level design"],
+    "virtual reality": ["virtual reality", "vr"],
+    "augmented reality": ["augmented reality", "ar"],
+    "mixed reality": ["mixed reality", "mr"],
+    "natural language generation": ["nlgen", "natural language generation"],
+    "chatbots": ["chatbots", "bots"],
+    "conversational ai": ["conversational ai"],
+    "speech recognition": ["speech recognition"],
+    "audio processing": ["audio processing"],
+    "music information retrieval": ["music information retrieval", "mir"],
+    "robotics": ["robotics"],
+    "autonomous systems": ["autonomous systems"],
+    "robotic process automation": ["rpa", "robotic process automation"],
+    "industrial automation": ["industrial automation"],
+    "plc programming": ["plc programming"],
+    "motion planning": ["motion planning"],
+    "mechatronics": ["mechatronics"],
+    "sensor fusion": ["sensor fusion"],
+    "internet of things": ["iot", "internet of things"],
+    "edge computing": ["edge computing"],
+    "fog computing": ["fog computing"],
+    "distributed systems": ["distributed systems"],
+    "microservices": ["microservices"],
+    "serverless architecture": ["serverless architecture"],
+    "api design": ["api design"],
+    "graphql": ["graphql"],
+    "restful api": ["restful api"],
+    "soap api": ["soap api"],
+    "cloud computing": ["cloud computing"],
+    "saas": ["saas"],
+    "paas": ["paas"],
+    "iaas": ["iaas"],
+    "server administration": ["server administration"],
+    "linux administration": ["linux administration"],
+    "windows server administration": ["windows server administration"],
+    "macos administration": ["macos administration"],
+    "network administration": ["network administration"],
+    "system administration": ["system administration"],
+    "it infrastructure": ["it infrastructure"],
+    "enterprise architecture": ["enterprise architecture"],
+    "solution architecture": ["solution architecture"],
+    "software architecture": ["software architecture"],
+    "microarchitecture": ["microarchitecture"],
+    "scalability": ["scalability"],
+    "high availability": ["high availability"],
+    "fault tolerance": ["fault tolerance"],
+    "load balancing": ["load balancing"],
+    "performance optimization": ["performance optimization"],
+    "capacity planning": ["capacity planning"],
+    "disaster recovery": ["disaster recovery"],
+    "business continuity": ["business continuity"],
+    "technical writing": ["technical writing"],
+    "documentation": ["documentation"],
+    "content management": ["content management"],
+    "knowledge management": ["knowledge management"],
+    "agile methodology": ["agile methodology"],
+    "scrum": ["scrum"],
+    "kanban": ["kanban"],
+    "lean methodology": ["lean methodology"],
+    "product management": ["product management"],
+    "product lifecycle management": ["plm", "product lifecycle management"],
+    "product design": ["product design"],
+    "user research": ["user research"],
+    "usability testing": ["usability testing"],
+    "design thinking": ["design thinking"],
+    "prototyping": ["prototyping"],
+    "interaction design": ["interaction design"],
+    "design systems": ["design systems"],
+    "wireframing": ["wireframing"],
+    "mockups": ["mockups"],
+    "visual design": ["visual design"],
+    "graphic design": ["graphic design"],
+    "illustration": ["illustration"],
+    "animation": ["animation"],
+    "video editing": ["video editing"],
+    "motion graphics": ["motion graphics"],
+    "3d modeling": ["3d modeling"],
+    "augmented reality design": ["augmented reality design"],
+    "virtual reality design": ["virtual reality design"],
+    "video game design": ["video game design"],
+    "artificial neural networks": ["ann", "artificial neural networks"],
+    "convolutional neural networks": ["cnn", "convolutional neural networks"],
+    "recurrent neural networks": ["rnn", "recurrent neural networks"],
+    "generative adversarial networks": ["gan", "generative adversarial networks"],
+    "transformers": ["transformers"],
+    "bert": ["bert"],
+    "gpt": ["gpt"],
+    "xl-net": ["xl-net"],
+    "albert": ["albert"],
+    "distilbert": ["distilbert"],
+    "word embeddings": ["word embeddings"],
+    "fasttext": ["fasttext"],
+    "glove": ["glove"],
+    "word2vec": ["word2vec"],
+    "entity recognition": ["entity recognition"],
+    "named entity recognition": ["ner", "named entity recognition"],
+    "part of speech tagging": ["pos tagging", "part of speech tagging"],
+    "sentiment analysis": ["sentiment analysis"],
+    "topic modeling": ["topic modeling"],
+    "text summarization": ["text summarization"],
+    "question answering": ["question answering"],
+    "machine translation": ["machine translation"],
+    "speech synthesis": ["speech synthesis"],
+    "image recognition": ["image recognition"],
+    "object detection": ["object detection"],
+    "facial recognition": ["facial recognition"],
+    "emotion recognition": ["emotion recognition"],
+    "gesture recognition": ["gesture recognition"],
+    "body pose estimation": ["body pose estimation"],
+    "medical imaging": ["medical imaging"],
+    "geographic information systems": ["gis", "geographic information systems"],
+    "spatial analysis": ["spatial analysis"],
+    "remote sensing": ["remote sensing"],
+    "geolocation": ["geolocation"],
+    "cartography": ["cartography"],
+    "geographic data visualization": ["geographic data visualization"],
+    "data engineering": ["data engineering"],
+    "etl": ["etl"],
+    "data integration": ["data integration"],
+    "data warehousing": ["data warehousing"],
+    "stream processing": ["stream processing"],
+    "real-time analytics": ["real-time analytics"],
+    "business intelligence": ["business intelligence", "bi"],
+    "data governance": ["data governance"],
+    "data privacy": ["data privacy"],
+    "data ethics": ["data ethics"],
+    "data security": ["data security"],
+    "data stewardship": ["data stewardship"],
+    "data quality": ["data quality"],
+    "database management": ["database management"],
+    "database design": ["database design"],
+    "database optimization": ["database optimization"],
+    "sql server": ["sql server"],
+    "oracle database": ["oracle database"],
+    "mysql database": ["mysql database"],
+    "nosql databases": ["nosql databases"],
+    "key-value stores": ["key-value stores"],
+    "document databases": ["document databases"],
+    "columnar databases": ["columnar databases"],
+    "graph databases": ["graph databases"],
+    "distributed databases": ["distributed databases"],
+    "bigtable": ["bigtable"],
+    "redis": ["redis"],
+    "apache kafka": ["kafka", "apache kafka"],
+    "rabbitmq": ["rabbitmq"],
+    "mqtt": ["mqtt"],
+    "data streaming": ["data streaming"],
+    "message queues": ["message queues"],
+    "service-oriented architecture": ["soa", "service-oriented architecture"],
+    "enterprise service bus": ["esb", "enterprise service bus"],
+    "microservices architecture": ["microservices architecture"],
+    "serverless computing": ["serverless computing"],
+    "cloud-native applications": ["cloud-native applications"],
+    "cloud migration": ["cloud migration"],
+    "multi-cloud architecture": ["multi-cloud architecture"],
+    "hybrid cloud": ["hybrid cloud"],
+    "edge computing": ["edge computing"]
+}
