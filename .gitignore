@@ -2,9 +2,12 @@
 .*
 !/.gitignore
 
-
+#output files
 /output/
 *.pkl
+
+#datasetfiles
+/dataset/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -99,7 +102,7 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+/.venv
 env/
 venv/
 ENV/
@@ -143,3 +146,5 @@ __pypackages__/
 
 # Local IDE configurations
 *.iml
+
+/dataset/
