@@ -3,7 +3,7 @@
 !/.gitignore
 
 
-output/
+/output/
 *.pkl
 
 # Byte-compiled / optimized / DLL files
