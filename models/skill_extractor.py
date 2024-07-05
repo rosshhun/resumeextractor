@@ -10,19 +10,19 @@ from torch.utils.data import DataLoader, TensorDataset
 from data.preprocessor import AdvancedPreprocessor
 from utils.text_processing import cosine_similarity, fuzzy_match, context_score, ngram_match
 from config import (SKILL_EXTRACTOR_THRESHOLD, TFIDF_MAX_FEATURES,
-                    HIDDEN_LAYER_SIZES, BATCH_SIZE, MAX_EPOCHS)
+                    HIDDEN_LAYER_SIZES, BATCH_SIZE, MAX_EPOCHS, USE_GPU, PIN_MEMORY)
 from models.fasttext_model import train_fasttext
 from data.loader import load_known_skills, load_skill_synonyms
 import logging
 from sklearn.decomposition import TruncatedSVD
+from Levenshtein import distance
 
 logger = logging.getLogger(__name__)
-
 
 class SkillExtractor(BaseEstimator, TransformerMixin):
     def __init__(self, threshold=SKILL_EXTRACTOR_THRESHOLD, tfidf_max_features=TFIDF_MAX_FEATURES,
                  learning_rate=0.001, epochs=MAX_EPOCHS, batch_size=BATCH_SIZE,
-                 hidden_layer_sizes=HIDDEN_LAYER_SIZES, dropout_rate=0.5, device=None):
+                 hidden_layer_sizes=HIDDEN_LAYER_SIZES, dropout_rate=0.5):
         self.threshold = threshold
         self.tfidf_max_features = tfidf_max_features
         self.learning_rate = learning_rate
@@ -30,7 +30,7 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
         self.batch_size = batch_size
         self.hidden_layer_sizes = hidden_layer_sizes
         self.dropout_rate = dropout_rate
-        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() and USE_GPU else "cpu")
         logger.info(f"SkillExtractor using device: {self.device}")
         self.tfidf_vectorizer = None
         self.fasttext_model = None
@@ -88,8 +88,8 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
                 labels.append(1 if skill in skills else 0)
 
         X_train = self.scaler.fit_transform(features)
-        X_train = torch.tensor(X_train, dtype=torch.float32).to(self.device)
-        y_train = torch.tensor(labels, dtype=torch.float32).to(self.device)
+        X_train = torch.tensor(X_train, dtype=torch.float32, device=self.device)
+        y_train = torch.tensor(labels, dtype=torch.float32, device=self.device)
 
         if not continue_training:
             input_size = X_train.shape[1]
@@ -100,13 +100,14 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
         optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
         dataset = TensorDataset(X_train, y_train)
-        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, pin_memory=PIN_MEMORY)
 
         logger.info(f"{'Continuing' if continue_training else 'Starting'} neural network training")
         for epoch in range(self._current_epoch, self.epochs):
             self.model.train()
             total_loss = 0
             for batch_X, batch_y in dataloader:
+                batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)
                 optimizer.zero_grad()
                 outputs = self.model(batch_X)
                 loss = criterion(outputs.squeeze(), batch_y)
@@ -157,7 +158,7 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
                 continue
 
             similarity_features = self._get_similarity_features(text, skill)
-            similarity_features = torch.tensor(similarity_features, dtype=torch.float32).to(self.device)
+            similarity_features = torch.tensor(similarity_features, dtype=torch.float32, device=self.device)
             combined_score = self.model(similarity_features).item()
 
             if combined_score > self.threshold:
@@ -183,7 +184,6 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
         return len(intersection) / len(union) if len(union) > 0 else 0
 
     def _levenshtein_distance(self, text1, text2):
-        from Levenshtein import distance
         return 1 - (distance(text1, text2) / max(len(text1), len(text2)))
 
 

@@ -6,18 +6,20 @@ from models.skill_extractor import SkillExtractor
 from utils.metrics import skill_accuracy_scorer
 from utils.analysis import analyze_feature_importance, error_analysis
 from config import (CV_FOLDS, OUTPUT_DIR, HYPERBAND_MIN_ITER, HYPERBAND_MAX_ITER,
-                    HYPERBAND_ETA, PARAM_DISTRIBUTIONS, RESOURCE_PARAM)
+                    HYPERBAND_ETA, PARAM_DISTRIBUTIONS, RESOURCE_PARAM, USE_GPU)
 from sklearn.pipeline import Pipeline
 from custom_optimizer import HyperbandSearchCV, CustomInteger
 import torch
 from testmodel.test_model import test_model
 import multiprocessing
+from data.preprocessor import AdvancedPreprocessor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() and USE_GPU else "cpu")
     logger.info(f"Using device: {device}")
 
     resumes = load_resume_dataset()
@@ -26,10 +28,20 @@ def main():
     texts = [resume['text'] for resume in resumes]
     skills = [resume['skills'] for resume in resumes]
 
+    # Data augmentation
+    preprocessor = AdvancedPreprocessor()
+    augmented_data = []
+    for text, skill_set in zip(texts, skills):
+        augmented_data.extend(preprocessor.augment_data(text, skill_set))
+
+    augmented_texts, augmented_skills = zip(*augmented_data)
+    texts.extend(augmented_texts)
+    skills.extend(augmented_skills)
+
     X_train, X_test, y_train, y_test = train_test_split(texts, skills, test_size=0.2, random_state=42)
 
     pipeline = Pipeline([
-        ('skill_extractor', SkillExtractor(device=device))
+        ('skill_extractor', SkillExtractor())
     ])
 
     param_distributions = PARAM_DISTRIBUTIONS.copy()
@@ -100,6 +112,7 @@ def main():
         pickle.dump(best_skill_extractor, f)
 
     logger.info(f"Best model saved successfully as {model_filename}")
+
 
 if __name__ == "__main__":
     main()
