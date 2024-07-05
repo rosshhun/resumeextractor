@@ -3,35 +3,32 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MinMaxScaler
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+from xgboost import XGBClassifier
+import xgboost as xgb
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import f1_score
 from data.preprocessor import AdvancedPreprocessor
 from utils.text_processing import cosine_similarity, fuzzy_match, context_score, ngram_match
 from config import (SKILL_EXTRACTOR_THRESHOLD, TFIDF_MAX_FEATURES,
-                    HIDDEN_LAYER_SIZES, BATCH_SIZE, MAX_EPOCHS, USE_GPU, PIN_MEMORY)
-from models.fasttext_model import train_fasttext
+                    XGBOOST_MAX_DEPTH, XGBOOST_LEARNING_RATE, XGBOOST_N_ESTIMATORS,
+                    XGBOOST_SUBSAMPLE, XGBOOST_COLSAMPLE_BYTREE, USE_GPU, PIN_MEMORY,
+                    BATCH_SIZE, OUTPUT_DIR, CV_FOLDS, PATIENCE)
+from models.fasttext_model import (prepare_training_data, train_fasttext,
+                                   load_fasttext_model, get_sentence_vector)
 from data.loader import load_known_skills, load_skill_synonyms
 import logging
 from sklearn.decomposition import TruncatedSVD
 from Levenshtein import distance
+import os
+import psutil
 
 logger = logging.getLogger(__name__)
 
+
 class SkillExtractor(BaseEstimator, TransformerMixin):
-    def __init__(self, threshold=SKILL_EXTRACTOR_THRESHOLD, tfidf_max_features=TFIDF_MAX_FEATURES,
-                 learning_rate=0.001, epochs=MAX_EPOCHS, batch_size=BATCH_SIZE,
-                 hidden_layer_sizes=HIDDEN_LAYER_SIZES, dropout_rate=0.5):
+    def __init__(self, threshold=SKILL_EXTRACTOR_THRESHOLD, tfidf_max_features=TFIDF_MAX_FEATURES):
         self.threshold = threshold
         self.tfidf_max_features = tfidf_max_features
-        self.learning_rate = learning_rate
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.hidden_layer_sizes = hidden_layer_sizes
-        self.dropout_rate = dropout_rate
-        self.device = torch.device("cuda" if torch.cuda.is_available() and USE_GPU else "cpu")
-        logger.info(f"SkillExtractor using device: {self.device}")
         self.tfidf_vectorizer = None
         self.fasttext_model = None
         self.svd = TruncatedSVD(n_components=100)
@@ -40,21 +37,22 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
         self.scaler = MinMaxScaler()
         self.known_skills = load_known_skills()
         self.skill_synonyms = load_skill_synonyms()
-        self._is_fitted = False
-        self._current_epoch = 0
+        self.fasttext_model_path = os.path.join(OUTPUT_DIR, 'fasttext_model')
+        self.device = 'cpu'  # We're not using GPU for now
 
     def fit(self, X, y):
         if isinstance(X, (pd.Series, np.ndarray)):
             X = X.tolist()
 
-        if not self._is_fitted:
-            self._initial_fit(X, y)
-        else:
-            self._continue_fit(X, y)
+        logger.info("Performing data augmentation")
+        augmented_data = []
+        for text, skills in zip(X, y):
+            augmented_data.extend(self.preprocessor.augment_data(text, skills))
 
-        return self
+        X_augmented, y_augmented = zip(*augmented_data)
+        X.extend(X_augmented)
+        y.extend(y_augmented)
 
-    def _initial_fit(self, X, y):
         logger.info("Preparing texts for TF-IDF and FastText")
         prepared_texts = [' '.join(self.preprocessor.preprocess_text(str(text))) for text in X]
         prepared_skills = [' '.join(self.preprocessor.preprocess_text(str(skill))) for skill in self.known_skills]
@@ -69,17 +67,17 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
         logger.info("Applying SVD to TF-IDF features")
         self.svd.fit(tfidf_matrix)
 
+        logger.info("Preparing FastText training data")
+        training_data_path = os.path.join(OUTPUT_DIR, 'fasttext_training_data.txt')
+        prepare_training_data(prepared_texts, prepared_skills, training_data_path)
+
         logger.info("Training FastText model")
-        self.fasttext_model = train_fasttext(X, self.known_skills)
-        logger.info(f"FastText vocabulary size: {len(self.fasttext_model.wv.key_to_index)}")
+        train_fasttext(training_data_path, self.fasttext_model_path)
 
-        self._train_model(X, y)
+        logger.info("Loading FastText model")
+        self.fasttext_model = load_fasttext_model(self.fasttext_model_path)
 
-    def _continue_fit(self, X, y):
-        self._train_model(X, y, continue_training=True)
-
-    def _train_model(self, X, y, continue_training=False):
-        logger.info("Preparing features for neural network")
+        logger.info("Preparing features for XGBoost")
         features = []
         labels = []
         for text, skills in zip(X, y):
@@ -88,48 +86,78 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
                 labels.append(1 if skill in skills else 0)
 
         X_train = self.scaler.fit_transform(features)
-        X_train = torch.tensor(X_train, dtype=torch.float32, device=self.device)
-        y_train = torch.tensor(labels, dtype=torch.float32, device=self.device)
+        y_train = np.array(labels)
 
-        if not continue_training:
-            input_size = X_train.shape[1]
-            self.model = Net(input_size, self.hidden_layer_sizes, self.dropout_rate).to(self.device)
-            self._current_epoch = 0
+        logger.info("Training XGBoost model with cross-validation")
+        self.model = self._create_xgboost_model()
 
-        criterion = nn.BCELoss()
-        optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        skf = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=42)
+        cv_scores = []
 
-        dataset = TensorDataset(X_train, y_train)
-        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, pin_memory=PIN_MEMORY)
+        for fold, (train_index, val_index) in enumerate(skf.split(X_train, y_train), 1):
+            X_fold_train, X_fold_val = X_train[train_index], X_train[val_index]
+            y_fold_train, y_fold_val = y_train[train_index], y_train[val_index]
 
-        logger.info(f"{'Continuing' if continue_training else 'Starting'} neural network training")
-        for epoch in range(self._current_epoch, self.epochs):
-            self.model.train()
-            total_loss = 0
-            for batch_X, batch_y in dataloader:
-                batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)
-                optimizer.zero_grad()
-                outputs = self.model(batch_X)
-                loss = criterion(outputs.squeeze(), batch_y)
-                loss.backward()
-                optimizer.step()
-                total_loss += loss.item()
+            eval_set = [(X_fold_val, y_fold_val)]
+            self.model.fit(
+                X_fold_train, y_fold_train,
+                eval_set=eval_set,
+                verbose=False
+            )
 
-            avg_loss = total_loss / len(dataloader)
-            logger.info(f"Epoch {epoch + 1}/{self.epochs}, Loss: {avg_loss:.4f}")
-            self._current_epoch += 1
+            y_fold_pred = self.model.predict(X_fold_val)
+            fold_score = f1_score(y_fold_val, y_fold_pred, average='weighted')
+            cv_scores.append(fold_score)
+            logger.info(f"Fold {fold} F1 Score: {fold_score:.4f}")
 
-        self._is_fitted = True
+        logger.info(f"Cross-validation scores: {cv_scores}")
+        logger.info(f"Mean CV score: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores) * 2:.4f})")
+
+        # Final fit on all data
+        eval_set = [(X_train, y_train)]
+        self.model.fit(
+            X_train, y_train,
+            eval_set=eval_set,
+            verbose=False
+        )
+
+        logger.info(f"Best iteration: {self.model.best_iteration}")
+        logger.info(f"Best score: {self.model.best_score}")
+
+        return self
+
+    def _create_xgboost_model(self):
+        tree_method = 'hist'  # Default to CPU
+        if USE_GPU:
+            try:
+                # Check if GPU is available for XGBoost
+                param = {'tree_method': 'gpu_hist'}
+                xgb.train(param, xgb.DMatrix(np.random.randn(1, 1), label=[0]))
+                tree_method = 'gpu_hist'
+                logger.info("GPU is available for XGBoost. Using GPU acceleration.")
+            except xgb.core.XGBoostError:
+                logger.info("GPU is not available for XGBoost. Falling back to CPU.")
+
+        return XGBClassifier(
+            max_depth=XGBOOST_MAX_DEPTH,
+            learning_rate=XGBOOST_LEARNING_RATE,
+            n_estimators=XGBOOST_N_ESTIMATORS,
+            subsample=XGBOOST_SUBSAMPLE,
+            colsample_bytree=XGBOOST_COLSAMPLE_BYTREE,
+            tree_method=tree_method,
+            n_jobs=psutil.cpu_count(logical=False),
+            enable_categorical=True,
+            early_stopping_rounds=PATIENCE,
+            eval_metric='logloss'
+        )
 
     def _get_similarity_features(self, text, skill):
-        text_features = self.extract_features(' '.join(self.preprocessor.preprocess_text(text)))
+        text_features = self.extract_features(text)
         skill_features = self.extract_features(skill)
         cosine_sim = cosine_similarity(text_features, skill_features)
         fuzzy_sim = fuzzy_match(text, skill)
         context_sim = context_score(text, skill)
         ngram_sim = ngram_match(text, skill, n_range=(2, 4))
-
-        # Add more features
         jaccard_sim = self._jaccard_similarity(text, skill)
         levenshtein_dist = self._levenshtein_distance(text, skill)
 
@@ -158,8 +186,8 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
                 continue
 
             similarity_features = self._get_similarity_features(text, skill)
-            similarity_features = torch.tensor(similarity_features, dtype=torch.float32, device=self.device)
-            combined_score = self.model(similarity_features).item()
+            similarity_features = self.scaler.transform([similarity_features])
+            combined_score = self.model.predict_proba(similarity_features)[0][1]
 
             if combined_score > self.threshold:
                 extracted_skills.add((skill, combined_score))
@@ -169,12 +197,11 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
     def extract_features(self, text):
         tfidf_features = self.tfidf_vectorizer.transform([text])
         svd_features = self.svd.transform(tfidf_features)
-        fasttext_features = np.mean(
-            [self.fasttext_model.wv[token] for token in text.split() if token in self.fasttext_model.wv], axis=0)
+        fasttext_features = get_sentence_vector(self.fasttext_model, text)
         return np.concatenate([svd_features[0], fasttext_features])
 
     def get_feature_importance(self):
-        return self.model.get_feature_importance()
+        return self.model.feature_importances_
 
     def _jaccard_similarity(self, text1, text2):
         set1 = set(self.preprocessor.preprocess_text(text1))
@@ -186,24 +213,16 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
     def _levenshtein_distance(self, text1, text2):
         return 1 - (distance(text1, text2) / max(len(text1), len(text2)))
 
+    def __getstate__(self):
+        """Custom method for pickling the object"""
+        state = self.__dict__.copy()
+        # Don't pickle fasttext_model, but save the path
+        del state['fasttext_model']
+        state['fasttext_model_path'] = self.fasttext_model_path
+        return state
 
-class Net(nn.Module):
-    def __init__(self, input_size, hidden_sizes, dropout_rate):
-        super(Net, self).__init__()
-        layers = []
-        prev_size = input_size
-        for hidden_size in hidden_sizes:
-            layers.append(nn.Linear(prev_size, hidden_size))
-            layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_rate))
-            prev_size = hidden_size
-        layers.append(nn.Linear(prev_size, 1))
-        layers.append(nn.Sigmoid())
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.model(x)
-
-    def get_feature_importance(self):
-        # Return the weights of the first layer as feature importance
-        return self.model[0].weight.data.cpu().numpy().mean(axis=0)
+    def __setstate__(self, state):
+        """Custom method for unpickling the object"""
+        self.__dict__.update(state)
+        # Load the fasttext model
+        self.fasttext_model = load_fasttext_model(self.fasttext_model_path)

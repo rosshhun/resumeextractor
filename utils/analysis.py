@@ -3,19 +3,15 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import numpy as np
 from config import OUTPUT_DIR
-
+import os
 
 def analyze_feature_importance(skill_extractor):
     feature_importance = skill_extractor.get_feature_importance()
-
-    # Ensure feature_names matches the length of feature_importance
     feature_names = ['cosine_sim', 'fuzzy_sim', 'context_sim', 'ngram_sim', 'jaccard_sim', 'levenshtein_dist']
 
-    # If the lengths don't match, adjust feature_names
     if len(feature_importance) != len(feature_names):
         feature_names = [f'Feature {i + 1}' for i in range(len(feature_importance))]
 
-    # Create a dictionary of feature names and their importance
     feature_dict = dict(zip(feature_names, feature_importance))
 
     plt.figure(figsize=(10, 6))
@@ -24,11 +20,10 @@ def analyze_feature_importance(skill_extractor):
     plt.xlabel('Importance')
     plt.ylabel('Feature')
     plt.tight_layout()
-    plt.savefig(OUTPUT_DIR / 'feature_importance.png')
+    plt.savefig(os.path.join(OUTPUT_DIR, 'feature_importance.png'))
     plt.close()
 
     return feature_dict
-
 
 def error_analysis(y_true, y_pred, known_skills):
     y_true_flat = [skill for skills in y_true for skill in skills]
@@ -46,7 +41,7 @@ def error_analysis(y_true, y_pred, known_skills):
     plt.title('Confusion Matrix for Skill Extraction')
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
-    plt.savefig(OUTPUT_DIR / 'confusion_matrix.png')
+    plt.savefig(os.path.join(OUTPUT_DIR, 'confusion_matrix.png'))
     plt.close()
 
     skill_metrics = {}

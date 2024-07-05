@@ -1,43 +1,59 @@
-from gensim.models import FastText
-from gensim.models.phrases import Phrases, Phraser
-from config import FASTTEXT_VECTOR_SIZE, FASTTEXT_WINDOW, FASTTEXT_MIN_COUNT, FASTTEXT_EPOCHS
-from data.preprocessor import AdvancedPreprocessor
-import torch
+import os
+import logging
+import fasttext
+import numpy as np
+import psutil
+from config import (FASTTEXT_VECTOR_SIZE, FASTTEXT_WINDOW, FASTTEXT_MIN_COUNT,
+                    FASTTEXT_EPOCHS, OUTPUT_DIR, MAX_CPU_USAGE)
 
-preprocessor = AdvancedPreprocessor()
+logger = logging.getLogger(__name__)
 
-def train_fasttext(texts, known_skills):
-    tokenized_texts = [preprocessor.preprocess_text(text) for text in texts]
 
-    bigram = Phrases(tokenized_texts, min_count=5, threshold=10)
-    trigram = Phrases(bigram[tokenized_texts], threshold=10)
+def get_optimal_threads():
+    cpu_count = psutil.cpu_count()
+    return max(1, int(cpu_count * MAX_CPU_USAGE))
 
-    bigram_mod = Phraser(bigram)
-    trigram_mod = Phraser(trigram)
 
-    tokenized_texts = [trigram_mod[bigram_mod[doc]] for doc in tokenized_texts]
+def prepare_training_data(texts, known_skills, output_file):
+    with open(output_file, 'w', encoding='utf-8') as f:
+        for text in texts:
+            f.write(f"__label__text {text}\n")
+        for skill in known_skills:
+            f.write(f"__label__skill {skill}\n")
+    logger.info(f"Training data prepared and saved to {output_file}")
 
-    for skill in known_skills:
-        skill_tokens = preprocessor.preprocess_text(skill)
-        if len(skill_tokens) > 1:
-            tokenized_texts.append(skill_tokens)
-        if len(skill_tokens) > 1:
-            tokenized_texts.append([skill.lower().replace(' ', '_')])
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def train_fasttext(input_file, model_path):
+    logger.info("Training FastText model from scratch")
+    optimal_threads = get_optimal_threads()
 
-    model = FastText(
-        sentences=tokenized_texts,
-        vector_size=FASTTEXT_VECTOR_SIZE,
-        window=FASTTEXT_WINDOW,
-        min_count=FASTTEXT_MIN_COUNT,
-        workers=4,
-        epochs=FASTTEXT_EPOCHS,
-        sg=1
+    model = fasttext.train_unsupervised(
+        input=input_file,
+        model='skipgram',
+        dim=FASTTEXT_VECTOR_SIZE,
+        ws=FASTTEXT_WINDOW,
+        minCount=FASTTEXT_MIN_COUNT,
+        epoch=FASTTEXT_EPOCHS,
+        thread=optimal_threads
     )
-
-    if device.type == 'cuda':
-        model.wv.vectors = torch.tensor(model.wv.vectors, device=device)
-        model.wv.vectors_norm = torch.tensor(model.wv.vectors_norm, device=device) if model.wv.vectors_norm is not None else None
-
+    model.save_model(model_path)
+    logger.info(f"FastText model saved to {model_path}")
     return model
+
+
+def load_fasttext_model(model_path):
+    return fasttext.load_model(model_path)
+
+
+def get_word_vector(model, word):
+    return model.get_word_vector(word)
+
+
+def get_sentence_vector(model, sentence):
+    """
+    Get the sentence vector using FastText model.
+    Remove newlines and extra spaces from the sentence.
+    """
+    # Remove newlines and extra spaces
+    cleaned_sentence = ' '.join(sentence.split())
+    return model.get_sentence_vector(cleaned_sentence)
