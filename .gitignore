@@ -2,9 +2,15 @@
 .*
 !/.gitignore
 
+*.json
+
+
 #output files
 /output/
 *.pkl
+*.pth
+*.txt
+*.onnx
 
 #datasetfiles
 /dataset/

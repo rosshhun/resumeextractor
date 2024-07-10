@@ -14,8 +14,8 @@ def skill_extraction_accuracy(y_true, y_pred):
     total_correct = 0
     total_skills = 0
     for true_skills, pred_skills in zip(y_true, y_pred):
-        true_set = set(true_skills)
-        pred_set = set(skill for skill, _ in pred_skills)
+        true_set = set(i for i, skill in enumerate(true_skills) if skill == 1)
+        pred_set = set(i for i, prob in pred_skills)
         total_correct += len(true_set.intersection(pred_set))
         total_skills += len(true_set)
     return total_correct / total_skills if total_skills > 0 else 0

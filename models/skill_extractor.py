@@ -126,6 +126,23 @@ class SkillExtractor(BaseEstimator, TransformerMixin):
 
         return self
 
+    def predict_proba(self, X):
+        if isinstance(X, (pd.Series, np.ndarray)):
+            X = X.tolist()
+        logger.info(f"Predicting probabilities for {len(X)} samples")
+
+        all_probs = []
+        for text in X:
+            text_probs = []
+            for skill in self.known_skills:
+                similarity_features = self._get_similarity_features(text, skill)
+                similarity_features = self.scaler.transform([similarity_features])
+                prob = self.model.predict_proba(similarity_features)[0][1]
+                text_probs.append(prob)
+            all_probs.append(text_probs)
+
+        return np.array(all_probs)
+
     def _create_xgboost_model(self):
         tree_method = 'hist'  # Default to CPU
         if USE_GPU:
