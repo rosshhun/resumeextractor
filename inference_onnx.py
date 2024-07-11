@@ -54,9 +54,64 @@ def main():
     ort_session, known_skills = load_model(model_path, known_skills_path)
 
     text = """
-    Bachelors/Master's degree with a focus in Information Technology / Computer Science or related field
-    Expertise in JavaScript / TypeScript, HTML, CSS, Python
-    Expertise with modern JS frameworks (React, JQuery, Angular, etc.) and responsive web design.
+    Job description
+Company Description
+
+Artech is the 10th Largest IT Staffing Company in the US, according to Staffing Industry Analysts' 2012 annual report. Artech provides technical expertise to fill gaps in clients' immediate skill-sets availability, deliver emerging technology skill-sets, refresh existing skill base, allow for flexibility in project planning and execution phases, and provide budgeting/financial flexibility by offering contingent labor as a variable cost.
+
+Job Description
+
+We are on a mission to build a new streaming platform for IP Detail Records.
+
+We need to build a collection platform in order to do this and at scale.
+
+We collect billions of records every day! This will be built on an internal openstack environment using Go, Scala, C++ or Java.
+
+What you will do:
+
+Build distributed, high-throughput, real-time data data collection systems
+
+Do it in Go, Scala, C/C++, Java or others
+
+Connect with Kafka and Storm for a data streaming service and open source databases like MongoDB
+
+Help us open source this project and build a new open source community.
+
+Qualifications
+
+Skills & requirements
+
+Who you must be:
+
+You have significant experience with Go and its standard library
+
+Before Go, progressive experience with Scala, Java or C/C++. Perl, Python a plus.
+
+Must be able to work in full-stack team with operations and QA team members.
+
+Must be super collaborative with non-developers.
+
+You tend to obsess over code simplicity and performance
+
+Startup like team in a large enterprise.
+
+Your Github shows your chops
+
+Bonus:
+
+You wrote your own data pipelines once or twice before (and know what you did wrong).
+
+You have battle scars with MongDB, Kafka, Storm
+
+Additional Information
+
+For more information, Please contact
+
+Siva Kumar
+
+973-507-7543
+
+siva.kumar(at)artechinfo.com
     """
 
     skills = predict_skills(ort_session, text, known_skills)

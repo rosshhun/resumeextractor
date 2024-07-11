@@ -3,6 +3,7 @@ import os
 import json
 import torch
 import numpy as np
+import argparse
 from sklearn.model_selection import train_test_split, KFold
 from data.loader import load_resume_dataset, load_known_skills
 from models.skill_extractor import SkillExtractor
@@ -14,7 +15,20 @@ from config import *
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def main():
+def save_checkpoint(state, filename="checkpoint.pth.tar"):
+    torch.save(state, filename)
+    logger.info(f"Checkpoint saved: {filename}")
+
+def load_checkpoint(filename):
+    if os.path.isfile(filename):
+        logger.info(f"Loading checkpoint: {filename}")
+        checkpoint = torch.load(filename)
+        return checkpoint
+    else:
+        logger.info(f"No checkpoint found at {filename}")
+        return None
+
+def main(use_checkpoint):
     try:
         logger.info(f"Using device: {DEVICE}")
 
@@ -46,10 +60,21 @@ def main():
         best_score = 0
         best_params = {}
 
+        # Check if a checkpoint exists and if we should use it
+        start_lr_idx = start_epochs_idx = start_alpha_idx = 0
+        if use_checkpoint:
+            checkpoint = load_checkpoint("tuning_checkpoint.pth.tar")
+            if checkpoint:
+                best_score = checkpoint['best_score']
+                best_params = checkpoint['best_params']
+                start_lr_idx = checkpoint['lr_idx']
+                start_epochs_idx = checkpoint['epochs_idx']
+                start_alpha_idx = checkpoint['alpha_idx']
+
         logger.info("Starting hyperparameter tuning for student model...")
-        for lr in LR_VALUES:
-            for epochs in EPOCH_VALUES:
-                for alpha in ALPHA_VALUES:
+        for lr_idx, lr in enumerate(LR_VALUES[start_lr_idx:], start=start_lr_idx):
+            for epochs_idx, epochs in enumerate(EPOCH_VALUES[start_epochs_idx:], start=start_epochs_idx):
+                for alpha_idx, alpha in enumerate(ALPHA_VALUES[start_alpha_idx:], start=start_alpha_idx):
                     scores = []
                     for fold, (train_index, val_index) in enumerate(kf.split(X_train), 1):
                         X_train_fold, X_val_fold = [X_train[i] for i in train_index], [X_train[i] for i in val_index]
@@ -70,6 +95,15 @@ def main():
                     if avg_score > best_score:
                         best_score = avg_score
                         best_params = {'lr': lr, 'epochs': epochs, 'alpha': alpha}
+
+                    if use_checkpoint:
+                        save_checkpoint({
+                            'best_score': best_score,
+                            'best_params': best_params,
+                            'lr_idx': lr_idx,
+                            'epochs_idx': epochs_idx,
+                            'alpha_idx': alpha_idx
+                        }, "tuning_checkpoint.pth.tar")
 
         logger.info(f"Best parameters: {best_params}")
 
@@ -134,5 +168,10 @@ def main():
     except Exception as e:
         logger.exception(f"An error occurred: {str(e)}")
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Skill Extraction Model Training")
+    parser.add_argument('--checkpoint', action='store_true', help='Use checkpointing')
+    args = parser.parse_args()
+
+    main(args.checkpoint)
